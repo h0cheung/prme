@@ -1,5 +1,6 @@
 #include "test_shell.h"
 #include "help.h"
+#include "scheduler.h"
 #include <fstream>
 #include <functional>
 #include <iostream>
@@ -7,6 +8,8 @@
 #include <string>
 
 int RunCommand(const std::string &command);
+
+std::unique_ptr<Scheduler> scheduler;
 
 int RunShell(const int input_file, const std::string &input_file_path,
              const int output_file, const std::string &output_file_path) {
@@ -24,6 +27,9 @@ int RunShell(const int input_file, const std::string &input_file_path,
   }
   std::ofstream stdoutput;
   stdoutput.basic_ios<char>::rdbuf(coutbuf); // Always output prompt to console
+  scheduler = std::make_unique<Scheduler>(
+      2, std::vector<std::pair<std::string, int>>{
+             {"R1", 1}, {"R2", 2}, {"R3", 3}, {"R4", 4}});
   std::string command;
   while (1) {
     if (!input_file)
@@ -50,7 +56,8 @@ int RunShell(const int input_file, const std::string &input_file_path,
   }
 }
 int RunCommand(const std::string &command) {
-  const static std::regex WSRegex("\\s+"); // Split by whitespace characters
+  const static std::regex WSRegex("\\s+");    // Split by whitespace characters
+  const static std::regex NUMRegex("[1-9]+"); // Split by whitespace characters
   std::vector<std::string> argv(
       std::sregex_token_iterator(command.cbegin(), command.cend(), WSRegex, -1),
       {});
@@ -60,38 +67,47 @@ int RunCommand(const std::string &command) {
   if (argv[0] == "init") {
     if (argc != 1)
       return -2; // Wrong number of arguments
-                 // Run "init" here
+    scheduler->init();
   } else if (argv[0] == "cr") {
     if (argc != 3)
       return -2;
-    if (argv[2] != "1" && argv[2] != "2")
+    if (!std::regex_match(argv[2].begin(), argv[2].end(), NUMRegex))
       return -3; // Wrong argument format
-                 // Run "cr" here
+    int priority = stoi(argv[2]);
+    if (priority > scheduler->max_priority || priority <= 0)
+      return -3;
+    scheduler->cr(argv[1], priority);
   } else if (argv[0] == "de") {
     if (argc != 2)
       return -2;
-    // Run "de" here
+    scheduler->de(argv[1]);
   } else if (argv[0] == "req") {
     if (argc != 2 && argc != 3)
       return -2;
-    // Run "req" here
+    if (argc == 3 &&
+        !std::regex_match(argv[2].begin(), argv[2].end(), NUMRegex))
+      return -3;
+    scheduler->req(argv[1], argc == 3?stoi(argv[3]): 1);
   } else if (argv[0] == "rel") {
     if (argc != 2 && argc != 3)
       return -2;
-    // Run "rel" here
+    if (argc == 3 &&
+        !std::regex_match(argv[2].begin(), argv[2].end(), NUMRegex))
+      return -3;
+    scheduler->rel(argv[1], argc == 3?stoi(argv[3]): 1);
   } else if (argv[0] == "to") {
     if (argc != 1)
       return -2;
-    // Run "to" here
+    scheduler->to();
   } else if (argv[0] == "list") {
     if (argc != 2)
       return -2;
     if (argv[1] == "ready")
-      ; // Run "list ready" here;
+      scheduler->list_ready();
     else if (argv[1] == "block")
-      ; // Run "list block" here
+      scheduler->list_block();
     else if (argv[1] == "res")
-      ; // Run "list block" here
+      scheduler->list_res();
     else
       return -3;
   } else if (argv[0] == "pr") {
