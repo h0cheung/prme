@@ -19,10 +19,10 @@ struct Process {
   } status;
   std::shared_ptr<Process> parent;
   std::unordered_set<std::shared_ptr<Process>> children;
-  int priority;
+  int priority, wait_resource = 0;  // number of needed resources
   Process(std::string pid = "init", int priority = 0)
       : pid(pid), priority(priority) {
-    status = {RUNNING, std::to_string(priority)}; // "running" by default
+    status = {RUNNING, priority}; // "running" by default
   }
 };
 
