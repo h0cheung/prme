@@ -1,3 +1,4 @@
 .ccls-cache/
 Debug/
 compile_commands.json
+*.kdev4
