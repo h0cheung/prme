@@ -233,6 +233,7 @@ int Scheduler::to() {
   auto p = running;
   running = nullptr;
   p->status.type = READY;
+  if(p->priority > 1) --p->priority;  // decrease priority, keep not less then 1
   ready_list[p->priority].emplace_back(p);
   Schedule();
   if (p != running) // switched to another process
