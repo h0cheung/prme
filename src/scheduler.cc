@@ -78,8 +78,6 @@ int Scheduler::tree_del(std::shared_ptr<Process> ptr) {
     tree_del(p);
   std::cout << "Process " << ptr->pid << " is killed. ";
   process_index.erase(ptr->pid);
-  for (auto &p : ptr->resources)
-    Release(p.first, p.second);
   switch (ptr->status.type) {
   case RUNNING:
     running = nullptr;
@@ -91,6 +89,8 @@ int Scheduler::tree_del(std::shared_ptr<Process> ptr) {
     block_list[std::get<std::string>(ptr->status.list)].remove(ptr);
     break;
   }
+  for (auto &p : ptr->resources)
+    Release(p.first, p.second);
   return 0;
 }
 
