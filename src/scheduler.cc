@@ -98,7 +98,7 @@ int Scheduler::Release(const std::string &res,
                        int cnt) { // modify ptr -> resources first
   std::cout << "Release " << cnt << ' ' << res << ". ";
   resources[res] += cnt;
-  while (!block_list[res].empty() && block_list[res].front()->wait_resource <
+  while (!block_list[res].empty() && block_list[res].front()->wait_resource <=
                                          resources[res]) { // weak up processes
     auto p = block_list[res].front();
     p->resources[res] += p->wait_resource;
